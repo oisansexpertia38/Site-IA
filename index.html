@@ -38,6 +38,7 @@
     <style>
       body {
         font-family: 'Inter', sans-serif;
+        background-color: #020617; /* Fallback color to prevent white flash or transparent background */
       }
       h1, h2, h3, h4, h5, h6 {
         font-family: 'Poppins', sans-serif;
@@ -67,12 +68,32 @@
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
       }
+      /* Loading Animation */
+      .loader-container {
+        height: 100vh;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: #009CA6;
+      }
+      .pulse {
+        animation: pulse-animation 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes pulse-animation {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .5; }
+      }
     </style>
+
+<link rel="stylesheet" href="/index.css">
   <script type="importmap">
 {
   "imports": {
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.1/client",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
     "react/": "https://aistudiocdn.com/react@^19.2.1/",
     "react": "https://aistudiocdn.com/react@^19.2.1",
@@ -80,8 +101,15 @@
   }
 }
 </script>
+  <script type="module" crossorigin src="/assets/index-C5XEpHM5.js"></script>
 </head>
   <body class="bg-slate-950 text-slate-50 antialiased selection:bg-logo-green/30 selection:text-white">
-    <div id="root"></div>
-  </body>
+    <div id="root">
+      <!-- Fallback content visible before React loads or if it crashes -->
+      <div class="loader-container font-sans">
+         <div class="text-2xl font-bold tracking-widest uppercase mb-4 text-white">Oisans Expert IA</div>
+         <div class="text-sm text-slate-500 pulse">Initialisation des systèmes...</div>
+      </div>
+    </div>
+</body>
 </html>
