@@ -38,7 +38,9 @@
     <style>
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #020617; /* Fallback color to prevent white flash or transparent background */
+        background-color: #020617; /* Fallback color */
+        margin: 0;
+        padding: 0;
       }
       h1, h2, h3, h4, h5, h6 {
         font-family: 'Poppins', sans-serif;
@@ -63,13 +65,11 @@
         -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.05);
       }
-      .text-gradient-oisans {
-        background: linear-gradient(to right, #2dd4bf, #a3e635);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
       /* Loading Animation */
       .loader-container {
+        position: fixed;
+        top: 0;
+        left: 0;
         height: 100vh;
         width: 100%;
         display: flex;
@@ -77,6 +77,8 @@
         justify-content: center;
         flex-direction: column;
         color: #009CA6;
+        background-color: #020617;
+        z-index: 9999;
       }
       .pulse {
         animation: pulse-animation 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -86,30 +88,27 @@
         50% { opacity: .5; }
       }
     </style>
-
-<link rel="stylesheet" href="/index.css">
   <script type="importmap">
 {
   "imports": {
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
-    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.1/client",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
     "react/": "https://aistudiocdn.com/react@^19.2.1/",
     "react": "https://aistudiocdn.com/react@^19.2.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
     "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.10.1"
   }
 }
 </script>
-  <script type="module" crossorigin src="/assets/index-C5XEpHM5.js"></script>
 </head>
   <body class="bg-slate-950 text-slate-50 antialiased selection:bg-logo-green/30 selection:text-white">
     <div id="root">
-      <!-- Fallback content visible before React loads or if it crashes -->
+      <!-- Fallback content visible before React loads -->
       <div class="loader-container font-sans">
          <div class="text-2xl font-bold tracking-widest uppercase mb-4 text-white">Oisans Expert IA</div>
-         <div class="text-sm text-slate-500 pulse">Initialisation des systèmes...</div>
+         <div class="text-sm text-slate-500 pulse">Connexion sécurisée en cours...</div>
       </div>
     </div>
-</body>
+    <script type="module" src="./index.tsx"></script>
+  </body>
 </html>

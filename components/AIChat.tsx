@@ -15,12 +15,27 @@ const AIChat: React.FC = () => {
   ]);
   const [inputText, setInputText] = useState('');
   const [loadingState, setLoadingState] = useState<LoadingState>(LoadingState.IDLE);
+  const [hasApiKey, setHasApiKey] = useState(false);
   
   // Use a ref to persist the chat session without triggering re-renders
   const chatSessionRef = useRef<Chat | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Check API key safely across environments (Vite/Node)
+    let keyExists = false;
+    try {
+        // @ts-ignore
+        if (import.meta && import.meta.env && (import.meta.env.VITE_API_KEY || import.meta.env.API_KEY)) {
+            keyExists = true;
+        } else if (typeof process !== 'undefined' && process.env && (process.env.VITE_API_KEY || process.env.API_KEY)) {
+            keyExists = true;
+        }
+    } catch (e) {
+      keyExists = false;
+    }
+    setHasApiKey(keyExists);
+
     // Initialize chat session on mount
     const session = createChatSession();
     if (session) {
@@ -85,8 +100,8 @@ const AIChat: React.FC = () => {
     }
   }, [inputText]);
 
-  if (!process.env.API_KEY) {
-    // Don't render chat if no API key is configured (or handle gracefully)
+  if (!hasApiKey) {
+    // Don't render chat if no API key is configured
     return null; 
   }
 

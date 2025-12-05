@@ -1,12 +1,41 @@
 import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
-// Initialize the API client
-const apiKey = process.env.API_KEY || ''; 
+// Fonction ultra-robuste pour récupérer la clé API dans tous les environnements (Vite, Webpack, Netlify)
+const getApiKey = (): string => {
+  // 1. Essayer la méthode standard Vite (import.meta.env)
+  try {
+    // @ts-ignore
+    if (import.meta && import.meta.env) {
+      // @ts-ignore
+      if (import.meta.env.VITE_API_KEY) return import.meta.env.VITE_API_KEY;
+      // @ts-ignore
+      if (import.meta.env.API_KEY) return import.meta.env.API_KEY;
+    }
+  } catch (e) {
+    // Ignorer si import.meta n'existe pas
+  }
+
+  // 2. Essayer la méthode standard Node/Webpack (process.env)
+  try {
+    if (typeof process !== 'undefined' && process.env) {
+      if (process.env.VITE_API_KEY) return process.env.VITE_API_KEY;
+      if (process.env.API_KEY) return process.env.API_KEY;
+    }
+  } catch (e) {
+    // Ignorer les erreurs d'accès à process
+  }
+
+  return '';
+};
+
+const apiKey = getApiKey();
 
 let ai: GoogleGenAI | null = null;
 
 if (apiKey) {
   ai = new GoogleGenAI({ apiKey: apiKey });
+} else {
+  console.warn("API Key manquante. Le Chatbot ne fonctionnera pas. Assurez-vous d'avoir défini VITE_API_KEY ou API_KEY sur Netlify.");
 }
 
 // Base de connaissances pour le bot (Données issues de ServicesPage.tsx)
