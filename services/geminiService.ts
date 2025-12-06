@@ -28,14 +28,43 @@ CATALOGUE SERVICES & PRIX:
 - Expert (10h): 450€/pers (ou 3800€ groupe 10). Workflows Make, Création Chatbot, Bases de données.
 `;
 
+// Fonction helper sécurisée pour récupérer la clé API sans faire crasher l'app
+const getApiKey = (): string | undefined => {
+  // 1. Essayer la méthode standard Vite/Netlify (import.meta.env)
+  try {
+    // @ts-ignore - Ignore TS error for import.meta in some environments
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+      // @ts-ignore
+      if (import.meta.env.VITE_API_KEY) return import.meta.env.VITE_API_KEY;
+      // @ts-ignore
+      if (import.meta.env.API_KEY) return import.meta.env.API_KEY;
+    }
+  } catch (e) {
+    // Fail silently
+  }
+
+  // 2. Essayer la méthode Node.js/Legacy (process.env) de manière sécurisée
+  try {
+    if (typeof process !== 'undefined' && process.env) {
+      if (process.env.API_KEY) return process.env.API_KEY;
+      if (process.env.VITE_API_KEY) return process.env.VITE_API_KEY;
+    }
+  } catch (e) {
+    // Fail silently - process is not defined
+  }
+
+  return undefined;
+};
+
 // Fonction helper pour initialiser l'IA seulement quand nécessaire
 const getAIClient = () => {
-  if (!process.env.API_KEY) {
-    // Au lieu de throw une erreur qui crash l'app, on retourne null
-    console.warn("API Key is missing via process.env.API_KEY");
+  const apiKey = getApiKey();
+  
+  if (!apiKey) {
+    console.warn("Gemini API Key manquante. Assurez-vous d'avoir défini VITE_API_KEY dans les variables d'environnement Netlify.");
     return null;
   }
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+  return new GoogleGenAI({ apiKey });
 };
 
 export const createChatSession = (): Chat | null => {
