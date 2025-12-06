@@ -1,20 +1,5 @@
 import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
-// Récupération sécurisée de la clé API
-const getApiKey = (): string => {
-  try {
-    // @ts-ignore
-    if (import.meta?.env?.VITE_API_KEY) return import.meta.env.VITE_API_KEY;
-    // @ts-ignore
-    if (import.meta?.env?.API_KEY) return import.meta.env.API_KEY;
-    // @ts-ignore
-    if (typeof process !== 'undefined' && process.env?.API_KEY) return process.env.API_KEY;
-  } catch (e) {
-    // Silence error
-  }
-  return "";
-};
-
 // Base de connaissances pour le bot
 const KNOWLEDGE_BASE = `
 CATALOGUE SERVICES & PRIX:
@@ -45,18 +30,19 @@ CATALOGUE SERVICES & PRIX:
 
 // Fonction helper pour initialiser l'IA seulement quand nécessaire
 const getAIClient = () => {
-  const key = getApiKey();
-  if (!key) {
-    console.warn("API Key is missing via getAIClient");
-    // On retourne null ou on lance une erreur contrôlée
-    throw new Error("Clé API manquante");
+  if (!process.env.API_KEY) {
+    // Au lieu de throw une erreur qui crash l'app, on retourne null
+    console.warn("API Key is missing via process.env.API_KEY");
+    return null;
   }
-  return new GoogleGenAI({ apiKey: key });
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
-export const createChatSession = (): Chat => {
+export const createChatSession = (): Chat | null => {
   try {
     const ai = getAIClient();
+    if (!ai) return null;
+
     return ai.chats.create({
       model: 'gemini-2.5-flash',
       config: {
@@ -90,7 +76,7 @@ export const createChatSession = (): Chat => {
     });
   } catch (error) {
     console.error("Failed to create chat session:", error);
-    throw error;
+    return null;
   }
 };
 

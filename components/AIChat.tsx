@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageSquare, X, Send, Bot, User, Loader2 } from 'lucide-react';
+import React, { useState, useRef, useCallback } from 'react';
+import { MessageSquare, X, Send, Bot, User, Loader2, AlertTriangle } from 'lucide-react';
 import { createChatSession, sendMessageStream } from '../services/geminiService';
 import { ChatMessage, LoadingState } from '../types';
 import { Chat, GenerateContentResponse } from "@google/genai";
@@ -19,37 +19,33 @@ const AIChat: React.FC = () => {
   const chatSessionRef = useRef<Chat | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Tentative d'initialisation silencieuse au montage
-  useEffect(() => {
-    try {
-      const session = createChatSession();
-      if (session) {
-        chatSessionRef.current = session;
-      }
-    } catch (error) {
-      // On ne fait rien ici, le bouton doit quand même s'afficher
-      console.log("Chat not ready yet (will retry on open)");
-    }
-  }, []);
+  // NOTE: On ne fait AUCUNE initialisation au chargement de la page
+  // Cela garantit que le bouton s'affiche même si l'API n'est pas configurée ou plante.
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      scrollToBottom();
-      // Si la session n'est pas prête quand on ouvre, on réessaie
-      if (!chatSessionRef.current) {
-         try {
-            const session = createChatSession();
+  const handleOpenChat = () => {
+    setIsOpen(true);
+    scrollToBottom();
+    
+    // Initialisation au clic uniquement (Lazy Loading)
+    if (!chatSessionRef.current) {
+       try {
+          const session = createChatSession();
+          if (session) {
             chatSessionRef.current = session;
-         } catch (e) {
-            console.error("Still no API key available");
-         }
-      }
+          } else {
+            console.warn("Session is null (Missing API Key likely)");
+          }
+       } catch (e) {
+          console.error("Error creating session on click");
+       }
     }
-  }, [messages, isOpen]);
+  };
 
   const handleSendMessage = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -66,25 +62,28 @@ const AIChat: React.FC = () => {
     setMessages(prev => [...prev, newUserMsg]);
     setInputText('');
     setLoadingState(LoadingState.LOADING);
+    scrollToBottom();
 
-    // Initialisation Just-in-Time si nécessaire
+    // Vérification de dernière minute
     if (!chatSessionRef.current) {
-        try {
-            const session = createChatSession();
+        // Nouvelle tentative
+        const session = createChatSession();
+        if (session) {
             chatSessionRef.current = session;
-        } catch (e) {
+        } else {
+            // Mode dégradé si toujours pas de clé
             setLoadingState(LoadingState.ERROR);
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
                 role: 'model',
-                text: "Configuration système incomplète (Clé API manquante). Veuillez contacter l'administrateur."
+                text: "⚠️ Le système d'IA est actuellement hors ligne (Clé API non configurée). Veuillez utiliser le formulaire de contact."
             }]);
             return;
         }
     }
 
     try {
-      const stream = await sendMessageStream(chatSessionRef.current, newUserMsg.text);
+      const stream = await sendMessageStream(chatSessionRef.current!, newUserMsg.text);
       
       const botMsgId = (Date.now() + 1).toString();
       setMessages(prev => [...prev, { id: botMsgId, role: 'model', text: '' }]);
@@ -99,6 +98,7 @@ const AIChat: React.FC = () => {
         setMessages(prev => prev.map(msg => 
           msg.id === botMsgId ? { ...msg, text: accumulatedText } : msg
         ));
+        scrollToBottom();
       }
       setLoadingState(LoadingState.SUCCESS);
 
@@ -115,11 +115,12 @@ const AIChat: React.FC = () => {
 
   return (
     <>
-      {/* Floating Button - Z-Index TRÈS élevé pour forcer l'affichage */}
+      {/* Floating Button - Style inline pour Z-Index garanti */}
       {!isOpen && (
         <button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-[9999] p-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full shadow-[0_0_20px_rgba(0,156,166,0.5)] transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-cyan-400 animate-in zoom-in duration-300"
+          onClick={handleOpenChat}
+          style={{ zIndex: 99999 }} 
+          className="fixed bottom-6 right-6 p-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full shadow-[0_0_20px_rgba(0,156,166,0.5)] transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-cyan-400 animate-in zoom-in duration-300"
           aria-label="Ouvrir le chat"
         >
           <MessageSquare className="w-6 h-6" />
@@ -128,7 +129,10 @@ const AIChat: React.FC = () => {
 
       {/* Chat Interface */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-[9999] w-[90vw] max-w-sm sm:w-96 h-[500px] bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
+        <div 
+          style={{ zIndex: 99999 }}
+          className="fixed bottom-6 right-6 w-[90vw] max-w-sm sm:w-96 h-[500px] bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300"
+        >
           
           {/* Header */}
           <div className="bg-slate-800 p-4 flex justify-between items-center border-b border-slate-700">
@@ -145,7 +149,7 @@ const AIChat: React.FC = () => {
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/95">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/95 scrollbar-thin scrollbar-thumb-slate-700">
             {messages.map((msg) => (
               <div
                 key={msg.id}
