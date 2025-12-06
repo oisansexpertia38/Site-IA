@@ -6,6 +6,7 @@ import AIChat from './components/AIChat';
 import ScrollToTop from './components/ScrollToTop';
 import CustomCursor from './components/CustomCursor';
 import ScrollProgress from './components/ScrollProgress';
+import AdminLock from './components/AdminLock';
 
 // Pages
 import Home from './pages/Home';
@@ -36,6 +37,9 @@ const App: React.FC = () => {
 
       {/* Le Chatbot est sorti du flux principal pour garantir qu'il flotte au-dessus de tout */}
       <AIChat />
+      
+      {/* Backdoor Admin pour configurer la clé API manuellement */}
+      <AdminLock />
     </HashRouter>
   );
 };

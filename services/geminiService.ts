@@ -28,11 +28,23 @@ CATALOGUE SERVICES & PRIX:
 - Expert (10h): 450€/pers (ou 3800€ groupe 10). Workflows Make, Création Chatbot, Bases de données.
 `;
 
-// Fonction helper sécurisée pour récupérer la clé API sans faire crasher l'app
+export const STORAGE_API_KEY = 'oisans_expert_ia_key';
+
+// Fonction helper sécurisée pour récupérer la clé API
 const getApiKey = (): string | undefined => {
-  // 1. Essayer la méthode standard Vite/Netlify (import.meta.env)
+  // 1. PRIORITÉ ABSOLUE : LocalStorage (injecté via le Cadenas Admin)
   try {
-    // @ts-ignore - Ignore TS error for import.meta in some environments
+    const localKey = localStorage.getItem(STORAGE_API_KEY);
+    if (localKey && localKey.startsWith('AIza')) {
+      return localKey;
+    }
+  } catch (e) {
+    // Ignore error
+  }
+
+  // 2. Essayer la méthode standard Vite/Netlify (import.meta.env)
+  try {
+    // @ts-ignore
     if (typeof import.meta !== 'undefined' && import.meta.env) {
       // @ts-ignore
       if (import.meta.env.VITE_API_KEY) return import.meta.env.VITE_API_KEY;
@@ -43,14 +55,14 @@ const getApiKey = (): string | undefined => {
     // Fail silently
   }
 
-  // 2. Essayer la méthode Node.js/Legacy (process.env) de manière sécurisée
+  // 3. Essayer la méthode Node.js/Legacy (process.env)
   try {
     if (typeof process !== 'undefined' && process.env) {
       if (process.env.API_KEY) return process.env.API_KEY;
       if (process.env.VITE_API_KEY) return process.env.VITE_API_KEY;
     }
   } catch (e) {
-    // Fail silently - process is not defined
+    // Fail silently
   }
 
   return undefined;
@@ -61,7 +73,7 @@ const getAIClient = () => {
   const apiKey = getApiKey();
   
   if (!apiKey) {
-    console.warn("Gemini API Key manquante. Assurez-vous d'avoir défini VITE_API_KEY dans les variables d'environnement Netlify.");
+    console.warn("Gemini API Key manquante.");
     return null;
   }
   return new GoogleGenAI({ apiKey });
