@@ -19,7 +19,9 @@ const App: React.FC = () => {
       <ScrollToTop />
       <CustomCursor />
       <ScrollProgress />
-      <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-logo-green/30 font-sans flex flex-col">
+      
+      {/* Conteneur principal du site */}
+      <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-logo-green/30 font-sans flex flex-col relative z-0">
         <Navbar />
         <main className="flex-grow">
           <Routes>
@@ -30,8 +32,10 @@ const App: React.FC = () => {
           </Routes>
         </main>
         <Footer />
-        <AIChat />
       </div>
+
+      {/* Le Chatbot est sorti du flux principal pour garantir qu'il flotte au-dessus de tout */}
+      <AIChat />
     </HashRouter>
   );
 };

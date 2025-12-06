@@ -1,6 +1,6 @@
 import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
-// Récupération sécurisée de la clé API (Compatible Vite & Standard)
+// Récupération sécurisée de la clé API
 const getApiKey = (): string => {
   try {
     // @ts-ignore
@@ -14,9 +14,6 @@ const getApiKey = (): string => {
   }
   return "";
 };
-
-const apiKey = getApiKey();
-const ai = new GoogleGenAI({ apiKey: apiKey });
 
 // Base de connaissances pour le bot
 const KNOWLEDGE_BASE = `
@@ -46,38 +43,55 @@ CATALOGUE SERVICES & PRIX:
 - Expert (10h): 450€/pers (ou 3800€ groupe 10). Workflows Make, Création Chatbot, Bases de données.
 `;
 
+// Fonction helper pour initialiser l'IA seulement quand nécessaire
+const getAIClient = () => {
+  const key = getApiKey();
+  if (!key) {
+    console.warn("API Key is missing via getAIClient");
+    // On retourne null ou on lance une erreur contrôlée
+    throw new Error("Clé API manquante");
+  }
+  return new GoogleGenAI({ apiKey: key });
+};
+
 export const createChatSession = (): Chat => {
-  return ai.chats.create({
-    model: 'gemini-2.5-flash',
-    config: {
-      systemInstruction: `You are the specialized virtual assistant for "Oisans Expert IA".
-      Your persona is strictly professional, strategic, and focused on ROI. 
-      You are embodying the founder, Mickaël Simonutti, who is a "Consultant-Entrepreneur".
-      
-      CORE MISSION:
-      "Sort the buzz from the concrete value."
-      Help business owners avoid costly, useless POCs and focus on measurable productivity gains.
+  try {
+    const ai = getAIClient();
+    return ai.chats.create({
+      model: 'gemini-2.5-flash',
+      config: {
+        systemInstruction: `You are the specialized virtual assistant for "Oisans Expert IA".
+        Your persona is strictly professional, strategic, and focused on ROI. 
+        You are embodying the founder, Mickaël Simonutti, who is a "Consultant-Entrepreneur".
+        
+        CORE MISSION:
+        "Sort the buzz from the concrete value."
+        Help business owners avoid costly, useless POCs and focus on measurable productivity gains.
 
-      KNOWLEDGE BASE (USE THIS FOR PRICE QUOTES):
-      ${KNOWLEDGE_BASE}
+        KNOWLEDGE BASE (USE THIS FOR PRICE QUOTES):
+        ${KNOWLEDGE_BASE}
 
-      KEY FACTS TO USE:
-      - 30% productivity potential via automation.
-      - ROI guaranteed within 6 months.
-      - 100% adoption rate via training.
-      
-      TONE:
-      - Expert, Direct, Reassuring. 
-      - Use "Nous" (We) to represent the agency.
-      - Do not be overly enthusiastic; be grounded and business-oriented.
-      - If a user asks for a price, GIVE THE EXACT PRICE from the Knowledge Base. Don't be vague.
-      - If the user's need doesn't fit a pack, propose a "Devis sur mesure" or an "Audit préalable".
+        KEY FACTS TO USE:
+        - 30% productivity potential via automation.
+        - ROI guaranteed within 6 months.
+        - 100% adoption rate via training.
+        
+        TONE:
+        - Expert, Direct, Reassuring. 
+        - Use "Nous" (We) to represent the agency.
+        - Do not be overly enthusiastic; be grounded and business-oriented.
+        - If a user asks for a price, GIVE THE EXACT PRICE from the Knowledge Base. Don't be vague.
+        - If the user's need doesn't fit a pack, propose a "Devis sur mesure" or an "Audit préalable".
 
-      GOAL:
-      Drive the user to "Réserver un audit" (Book an audit) or "Envoyer un message".
-      Always end your answers by asking if they want to book a free 30min discovery call.`,
-    },
-  });
+        GOAL:
+        Drive the user to "Réserver un audit" (Book an audit) or "Envoyer un message".
+        Always end your answers by asking if they want to book a free 30min discovery call.`,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to create chat session:", error);
+    throw error;
+  }
 };
 
 export const sendMessageStream = async (

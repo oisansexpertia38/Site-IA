@@ -16,19 +16,19 @@ const AIChat: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [loadingState, setLoadingState] = useState<LoadingState>(LoadingState.IDLE);
   
-  // Use a ref to persist the chat session without triggering re-renders
   const chatSessionRef = useRef<Chat | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Tentative d'initialisation silencieuse au montage
   useEffect(() => {
-    // Initialize chat session on mount
     try {
       const session = createChatSession();
       if (session) {
         chatSessionRef.current = session;
       }
     } catch (error) {
-      console.warn("Chat initialization failed (likely missing API key)", error);
+      // On ne fait rien ici, le bouton doit quand même s'afficher
+      console.log("Chat not ready yet (will retry on open)");
     }
   }, []);
 
@@ -39,6 +39,15 @@ const AIChat: React.FC = () => {
   useEffect(() => {
     if (isOpen) {
       scrollToBottom();
+      // Si la session n'est pas prête quand on ouvre, on réessaie
+      if (!chatSessionRef.current) {
+         try {
+            const session = createChatSession();
+            chatSessionRef.current = session;
+         } catch (e) {
+            console.error("Still no API key available");
+         }
+      }
     }
   }, [messages, isOpen]);
 
@@ -58,8 +67,8 @@ const AIChat: React.FC = () => {
     setInputText('');
     setLoadingState(LoadingState.LOADING);
 
+    // Initialisation Just-in-Time si nécessaire
     if (!chatSessionRef.current) {
-        // Tentative de reconnexion si la session n'est pas active
         try {
             const session = createChatSession();
             chatSessionRef.current = session;
@@ -68,7 +77,7 @@ const AIChat: React.FC = () => {
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
                 role: 'model',
-                text: "Configuration système incomplète. Veuillez contacter l'administrateur."
+                text: "Configuration système incomplète (Clé API manquante). Veuillez contacter l'administrateur."
             }]);
             return;
         }
@@ -78,7 +87,6 @@ const AIChat: React.FC = () => {
       const stream = await sendMessageStream(chatSessionRef.current, newUserMsg.text);
       
       const botMsgId = (Date.now() + 1).toString();
-      // Initialize empty bot message
       setMessages(prev => [...prev, { id: botMsgId, role: 'model', text: '' }]);
 
       let accumulatedText = '';
@@ -99,7 +107,7 @@ const AIChat: React.FC = () => {
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'model',
-        text: "Désolé, je rencontre des difficultés techniques pour le moment. Veuillez réessayer plus tard."
+        text: "Une erreur de connexion est survenue. Veuillez réessayer."
       }]);
       setLoadingState(LoadingState.ERROR);
     }
@@ -107,11 +115,11 @@ const AIChat: React.FC = () => {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button - Z-Index TRÈS élevé pour forcer l'affichage */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 p-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full shadow-lg transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+          className="fixed bottom-6 right-6 z-[9999] p-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full shadow-[0_0_20px_rgba(0,156,166,0.5)] transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-cyan-400 animate-in zoom-in duration-300"
           aria-label="Ouvrir le chat"
         >
           <MessageSquare className="w-6 h-6" />
@@ -120,7 +128,7 @@ const AIChat: React.FC = () => {
 
       {/* Chat Interface */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-full max-w-sm sm:w-96 h-[500px] bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
+        <div className="fixed bottom-6 right-6 z-[9999] w-[90vw] max-w-sm sm:w-96 h-[500px] bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
           
           {/* Header */}
           <div className="bg-slate-800 p-4 flex justify-between items-center border-b border-slate-700">
