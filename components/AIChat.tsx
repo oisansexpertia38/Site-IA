@@ -15,31 +15,20 @@ const AIChat: React.FC = () => {
   ]);
   const [inputText, setInputText] = useState('');
   const [loadingState, setLoadingState] = useState<LoadingState>(LoadingState.IDLE);
-  const [hasApiKey, setHasApiKey] = useState(false);
   
   // Use a ref to persist the chat session without triggering re-renders
   const chatSessionRef = useRef<Chat | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Check API key safely across environments (Vite/Node)
-    let keyExists = false;
-    try {
-        // @ts-ignore
-        if (import.meta && import.meta.env && (import.meta.env.VITE_API_KEY || import.meta.env.API_KEY)) {
-            keyExists = true;
-        } else if (typeof process !== 'undefined' && process.env && (process.env.VITE_API_KEY || process.env.API_KEY)) {
-            keyExists = true;
-        }
-    } catch (e) {
-      keyExists = false;
-    }
-    setHasApiKey(keyExists);
-
     // Initialize chat session on mount
-    const session = createChatSession();
-    if (session) {
-      chatSessionRef.current = session;
+    try {
+      const session = createChatSession();
+      if (session) {
+        chatSessionRef.current = session;
+      }
+    } catch (error) {
+      console.warn("Chat initialization failed (likely missing API key)", error);
     }
   }, []);
 
@@ -56,7 +45,7 @@ const AIChat: React.FC = () => {
   const handleSendMessage = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
     
-    if (!inputText.trim() || !chatSessionRef.current) return;
+    if (!inputText.trim()) return;
     
     const userMsgId = Date.now().toString();
     const newUserMsg: ChatMessage = {
@@ -68,6 +57,22 @@ const AIChat: React.FC = () => {
     setMessages(prev => [...prev, newUserMsg]);
     setInputText('');
     setLoadingState(LoadingState.LOADING);
+
+    if (!chatSessionRef.current) {
+        // Tentative de reconnexion si la session n'est pas active
+        try {
+            const session = createChatSession();
+            chatSessionRef.current = session;
+        } catch (e) {
+            setLoadingState(LoadingState.ERROR);
+            setMessages(prev => [...prev, {
+                id: Date.now().toString(),
+                role: 'model',
+                text: "Configuration système incomplète. Veuillez contacter l'administrateur."
+            }]);
+            return;
+        }
+    }
 
     try {
       const stream = await sendMessageStream(chatSessionRef.current, newUserMsg.text);
@@ -99,11 +104,6 @@ const AIChat: React.FC = () => {
       setLoadingState(LoadingState.ERROR);
     }
   }, [inputText]);
-
-  if (!hasApiKey) {
-    // Don't render chat if no API key is configured
-    return null; 
-  }
 
   return (
     <>

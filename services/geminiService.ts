@@ -1,45 +1,24 @@
 import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
-// Fonction ultra-robuste pour récupérer la clé API dans tous les environnements (Vite, Webpack, Netlify)
+// Récupération sécurisée de la clé API (Compatible Vite & Standard)
 const getApiKey = (): string => {
-  // 1. Essayer la méthode standard Vite (import.meta.env) - C'est celle utilisée par Netlify avec Vite
   try {
     // @ts-ignore
-    if (import.meta && import.meta.env) {
-      // @ts-ignore
-      if (import.meta.env.VITE_API_KEY) return import.meta.env.VITE_API_KEY;
-      // @ts-ignore
-      if (import.meta.env.API_KEY) return import.meta.env.API_KEY;
-    }
+    if (import.meta?.env?.VITE_API_KEY) return import.meta.env.VITE_API_KEY;
+    // @ts-ignore
+    if (import.meta?.env?.API_KEY) return import.meta.env.API_KEY;
+    // @ts-ignore
+    if (typeof process !== 'undefined' && process.env?.API_KEY) return process.env.API_KEY;
   } catch (e) {
-    // Ignorer si import.meta n'existe pas
+    // Silence error
   }
-
-  // 2. Essayer la méthode standard Node/Webpack (process.env)
-  try {
-    if (typeof process !== 'undefined' && process.env) {
-      if (process.env.VITE_API_KEY) return process.env.VITE_API_KEY;
-      if (process.env.API_KEY) return process.env.API_KEY;
-    }
-  } catch (e) {
-    // Ignorer les erreurs d'accès à process
-  }
-
-  return '';
+  return "";
 };
 
 const apiKey = getApiKey();
+const ai = new GoogleGenAI({ apiKey: apiKey });
 
-let ai: GoogleGenAI | null = null;
-
-if (apiKey && apiKey.startsWith('AIza')) {
-  ai = new GoogleGenAI({ apiKey: apiKey });
-} else {
-  console.error("ERREUR CRITIQUE: Clé API manquante ou invalide.");
-  console.info("Pour fixer cela sur Netlify : Allez dans Site Configuration > Environment Variables > Add Variable. Key: 'VITE_API_KEY', Value: 'VotreCléAIza...'");
-}
-
-// Base de connaissances pour le bot (Données issues de ServicesPage.tsx)
+// Base de connaissances pour le bot
 const KNOWLEDGE_BASE = `
 CATALOGUE SERVICES & PRIX:
 
@@ -67,9 +46,7 @@ CATALOGUE SERVICES & PRIX:
 - Expert (10h): 450€/pers (ou 3800€ groupe 10). Workflows Make, Création Chatbot, Bases de données.
 `;
 
-export const createChatSession = (): Chat | null => {
-  if (!ai) return null;
-  
+export const createChatSession = (): Chat => {
   return ai.chats.create({
     model: 'gemini-2.5-flash',
     config: {
