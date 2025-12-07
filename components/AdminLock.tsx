@@ -54,20 +54,24 @@ const AdminLock: React.FC = () => {
     return (
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 left-4 z-[9999] p-2 text-slate-700 hover:text-logo-teal transition-colors opacity-30 hover:opacity-100"
-        title="Admin Config"
+        className="fixed bottom-4 left-4 z-[99999] p-3 rounded-full bg-slate-800/80 border border-slate-600 text-slate-300 hover:text-white hover:bg-logo-teal hover:border-logo-teal transition-all duration-300 shadow-lg backdrop-blur-sm group"
+        title="Configuration Admin"
       >
-        {savedKey ? <Lock size={16} /> : <Unlock size={16} className="text-red-500 animate-pulse"/>}
+        {savedKey ? (
+          <Lock size={20} className="group-hover:scale-110 transition-transform" />
+        ) : (
+          <Unlock size={20} className="text-red-400 animate-pulse group-hover:text-white group-hover:animate-none" />
+        )}
       </button>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
         <button 
           onClick={() => setIsOpen(false)}
-          className="absolute top-4 right-4 text-slate-500 hover:text-white"
+          className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
         >
           <X size={20} />
         </button>
@@ -84,11 +88,12 @@ const AdminLock: React.FC = () => {
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:border-logo-teal outline-none"
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-logo-teal outline-none transition-colors"
                 placeholder="Entrez le code..."
+                autoFocus
               />
             </div>
-            <button type="submit" className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold">
+            <button type="submit" className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold transition-colors">
               Déverrouiller
             </button>
           </form>
@@ -113,23 +118,24 @@ const AdminLock: React.FC = () => {
                 type="text" 
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-white focus:border-logo-green outline-none font-mono text-xs"
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-logo-green outline-none font-mono text-xs shadow-inner"
                 placeholder="AIzaSy..."
+                autoFocus
               />
             </div>
 
             <div className="flex gap-3">
-              <button type="submit" className="flex-1 py-3 bg-logo-teal hover:bg-logo-teal/80 text-white rounded-lg font-bold flex items-center justify-center gap-2">
+              <button type="submit" className="flex-1 py-3 bg-gradient-to-r from-logo-teal to-logo-green hover:shadow-lg text-white rounded-lg font-bold flex items-center justify-center gap-2 transition-all">
                 <Save size={18} /> Sauvegarder
               </button>
               {savedKey && (
-                <button type="button" onClick={handleClear} className="px-4 py-3 bg-red-900/50 hover:bg-red-900 text-red-200 rounded-lg">
+                <button type="button" onClick={handleClear} className="px-4 py-3 bg-red-900/30 hover:bg-red-900/50 text-red-200 border border-red-900/50 rounded-lg transition-colors">
                   <X size={18} />
                 </button>
               )}
             </div>
             <p className="text-xs text-slate-500 text-center">
-              La clé est stockée uniquement dans votre navigateur.
+              La clé est stockée localement dans votre navigateur.
             </p>
           </form>
         )}
